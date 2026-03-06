@@ -1,7 +1,7 @@
 """
 MaizeGuard Backend — Flask API
 Run: python app.py
-Requires: pip install flask flask-cors tensorflow pillow numpy
+Requires: pip install flask flask-cors onnxruntime pillow numpy
 """
 
 from flask import Flask, request, jsonify
@@ -78,41 +78,34 @@ DISEASE_INFO = {
 # ── Model loading ─────────────────────────────────────────────────────────────
 model = None
 
-# GitHub raw URL for your model
-MODEL_URL = "https://github.com/Sjatoe/maizeguard/raw/main/maize_model_savedmodel.zip"
-MODEL_PATH = "maize_model_savedmodel.zip"
-MODEL_DIR = "maize_model_savedmodel"
+MODEL_URL = "https://github.com/Sjatoe/maizeguard/raw/main/maize_model.onnx"
+MODEL_PATH = "maize_model.onnx"
 
 def download_model():
-    """Download and extract model from GitHub if not already present."""
-    if os.path.exists(MODEL_DIR):
-        print(f"✅ Model already exists at {MODEL_DIR}")
+    """Download ONNX model from GitHub if not already present."""
+    if os.path.exists(MODEL_PATH):
+        print(f"✅ Model already exists at {MODEL_PATH}")
         return True
     try:
-        import urllib.request, zipfile
+        import urllib.request
         print(f"⬇️  Downloading model from GitHub...")
         urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
-        print(f"✅ Downloaded. Extracting...")
-        os.makedirs(MODEL_DIR, exist_ok=True)
-        with zipfile.ZipFile(MODEL_PATH, 'r') as z:
-            z.extractall(MODEL_DIR)
-        os.remove(MODEL_PATH)
-        print(f"✅ Model extracted successfully!")
+        print(f"✅ Model downloaded successfully!")
         return True
     except Exception as e:
         print(f"❌ Failed to download model: {e}")
         return False
 
 def load_model():
-    """Load the SavedModel format model."""
+    """Load the ONNX model."""
     global model
     if not download_model():
         print("⚠  Running in DEMO mode.")
         return
     try:
-        import tensorflow as tf
-        model = tf.keras.models.load_model(MODEL_DIR)
-        print(f"✅ Model loaded from {MODEL_DIR}")
+        import onnxruntime as ort
+        model = ort.InferenceSession(MODEL_PATH, providers=["CPUExecutionProvider"])
+        print(f"✅ ONNX model loaded from {MODEL_PATH}")
     except Exception as e:
         print(f"❌ Failed to load model: {e}")
 
@@ -147,15 +140,16 @@ def predict_single(image_bytes):
         confidence = round(random.uniform(72, 98), 1)
         return disease, confidence
 
-    # ── REAL INFERENCE ───────────────────────────────────────────────────────
+    # ── REAL INFERENCE (ONNX) ────────────────────────────────────────────────
     tensor = preprocess_image(image_bytes)
-    predictions = model.predict(tensor, verbose=0)[0]   # shape: (num_classes,)
-    
+    input_name = model.get_inputs()[0].name
+    predictions = model.run(None, {input_name: tensor})[0][0]  # shape: (num_classes,)
+
     # Debug: print all class probabilities
     print("\n🔍 Raw predictions:")
     for i, (name, prob) in enumerate(zip(CLASS_NAMES, predictions)):
         print(f"  [{i}] {name}: {prob*100:.2f}%")
-    
+
     idx = int(np.argmax(predictions))
     confidence = round(float(predictions[idx]) * 100, 1)
     disease = CLASS_NAMES[idx]
