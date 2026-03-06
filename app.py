@@ -1,7 +1,7 @@
 """
 MaizeGuard Backend — Flask API
 Run: python app.py
-Requires: pip install flask flask-cors onnxruntime pillow numpy
+Requires: pip install flask flask-cors tensorflow pillow numpy
 """
 
 from flask import Flask, request, jsonify
@@ -78,11 +78,12 @@ DISEASE_INFO = {
 # ── Model loading ─────────────────────────────────────────────────────────────
 model = None
 
-MODEL_URL = "https://github.com/Sjatoe/maizeguard/raw/main/maize_model.onnx"
-MODEL_PATH = "maize_model.onnx"
+# GitHub raw URL for your model
+MODEL_URL = "https://github.com/Sjatoe/maizeguard/raw/main/maize_model_224.keras"
+MODEL_PATH = "maize_model_224.keras"
 
 def download_model():
-    """Download ONNX model from GitHub if not already present."""
+    """Download model from GitHub if not already present."""
     if os.path.exists(MODEL_PATH):
         print(f"✅ Model already exists at {MODEL_PATH}")
         return True
@@ -97,15 +98,15 @@ def download_model():
         return False
 
 def load_model():
-    """Load the ONNX model."""
+    """Load the keras model."""
     global model
     if not download_model():
         print("⚠  Running in DEMO mode.")
         return
     try:
-        import onnxruntime as ort
-        model = ort.InferenceSession(MODEL_PATH, providers=["CPUExecutionProvider"])
-        print(f"✅ ONNX model loaded from {MODEL_PATH}")
+        import tensorflow as tf
+        model = tf.keras.models.load_model(MODEL_PATH)
+        print(f"✅ Model loaded from {MODEL_PATH}")
     except Exception as e:
         print(f"❌ Failed to load model: {e}")
 
@@ -140,16 +141,15 @@ def predict_single(image_bytes):
         confidence = round(random.uniform(72, 98), 1)
         return disease, confidence
 
-    # ── REAL INFERENCE (ONNX) ────────────────────────────────────────────────
+    # ── REAL INFERENCE ───────────────────────────────────────────────────────
     tensor = preprocess_image(image_bytes)
-    input_name = model.get_inputs()[0].name
-    predictions = model.run(None, {input_name: tensor})[0][0]  # shape: (num_classes,)
-
+    predictions = model.predict(tensor, verbose=0)[0]   # shape: (num_classes,)
+    
     # Debug: print all class probabilities
     print("\n🔍 Raw predictions:")
     for i, (name, prob) in enumerate(zip(CLASS_NAMES, predictions)):
         print(f"  [{i}] {name}: {prob*100:.2f}%")
-
+    
     idx = int(np.argmax(predictions))
     confidence = round(float(predictions[idx]) * 100, 1)
     disease = CLASS_NAMES[idx]

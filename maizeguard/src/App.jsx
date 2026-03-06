@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
 
-const API = "https://maizeguard-api.onrender.com";
+const API = "http://localhost:8000";
 
 // ── Theme palettes ─────────────────────────────────────────────────────────────
 const DARK = {
@@ -46,13 +46,13 @@ const useTheme = () => useContext(ThemeCtx);
 const NAV_ITEMS = ["Dashboard", "Detect", "Diseases", "History"];
 
 const DISEASE_COLORS = {
-  "fall armyworm": "#c0392b",
-  "grasshopper":   "#7dbd5f",
-  "healthy":       "#4ade80",
-  "leaf beetle":   "#d4a017",
-  "leaf blight":   "#e67e22",
-  "leaf spot":     "#95a5a6",
-  "streak virus":  "#8e44ad",
+  "Northern Leaf Blight": "#e67e22",
+  "Fall Armyworm":        "#c0392b",
+  "Gray Leaf Spot":       "#95a5a6",
+  "Leaf Beetle":          "#d4a017",
+  "Grasshopper":          "#7dbd5f",
+  "Streak Virus":         "#8e44ad",
+  Healthy:                "#4ade80",
 };
 
 // ── Atoms ──────────────────────────────────────────────────────────────────────
@@ -305,8 +305,8 @@ function Detect({ onDetection }) {
           <div style={{ display: "flex", gap: 24, padding: "16px 24px", background: C.accent + "12", border: `1px solid ${C.accent}33`, borderRadius: 12, flexWrap: "wrap" }}>
             {[
               { label: "SCANNED",  val: results.length, color: C.accent },
-              { label: "HEALTHY",  val: results.filter((r) => r.disease === "healthy").length, color: C.green },
-              { label: "DISEASED", val: results.filter((r) => r.disease !== "healthy").length, color: C.red   },
+              { label: "HEALTHY",  val: results.filter((r) => r.disease === "Healthy").length, color: C.green },
+              { label: "DISEASED", val: results.filter((r) => r.disease !== "Healthy").length, color: C.red   },
               { label: "AVG CONF", val: `${Math.round(results.reduce((a, r) => a + r.confidence, 0) / results.length)}%`, color: C.text },
             ].map((s) => (
               <div key={s.label} style={{ textAlign: "center" }}>
@@ -355,37 +355,37 @@ function Detect({ onDetection }) {
 
 // ── Diseases ───────────────────────────────────────────────────────────────────
 const DISEASES_STATIC = [
-  { name: "leaf blight", color: "#e67e22", emoji: "🍂",
+  { name: "Northern Leaf Blight", color: "#e67e22", emoji: "🍂",
     description: "Caused by Exserohilum turcicum. Produces long, cigar-shaped gray-green lesions (2.5–15 cm) that mature to tan with dark borders.",
     conditions: "Cool temperatures (18–27°C), high humidity, wet weather",
     impact: "Can reduce yield by 30–50% in severe cases",
     treatment: ["Propiconazole or azoxystrobin fungicides", "Crop rotation", "Resistant hybrids"],
     prevention: ["Scout fields regularly", "Destroy crop debris post-harvest", "Ensure good drainage"] },
-  { name: "fall armyworm", color: "#c0392b", emoji: "🐛", type: "Pest Infestation",
+  { name: "Fall Armyworm", color: "#c0392b", emoji: "🐛", type: "Pest Infestation",
     description: "Larvae feed aggressively creating irregular 'window pane' holes, ragged leaf edges, and characteristic wet sawdust-like frass in the whorl.",
     conditions: "Warm temperatures (25–35°C), dry spells, high migration periods",
     impact: "Yield losses of 20–73% without timely intervention",
     treatment: ["Apply emamectin benzoate or spinetoram at early infestation", "Biological control using Bt", "Apply neem-based sprays"],
     prevention: ["Early planting before peak moth migration", "Scout whorls twice weekly", "Use push-pull farming strategy"] },
-  { name: "leaf spot", color: "#6b7280", emoji: "🌫️",
+  { name: "Gray Leaf Spot", color: "#6b7280", emoji: "🌫️",
     description: "Caused by Cercospora zeae-maydis. Rectangular gray-tan lesions restricted by veins; visible on both leaf surfaces.",
     conditions: "Warm temperatures (25–30°C), extended leaf wetness, dense canopies",
     impact: "Major yield losses up to 50% in susceptible varieties",
     treatment: ["Strobilurin + triazole fungicides", "Improve drainage", "Reduce canopy density"],
     prevention: ["Crop rotation", "Tillage of surface residue", "GLS-tolerant varieties"] },
-  { name: "leaf beetle", color: "#d4a017", emoji: "🪲", type: "Pest Infestation",
+  { name: "Leaf Beetle", color: "#d4a017", emoji: "🪲", type: "Pest Infestation",
     description: "Beetles chew long narrow strips between leaf veins giving leaves a characteristic ladder or window pane appearance.",
     conditions: "Warm, dry conditions; crop at V3–V8 growth stage most vulnerable",
     impact: "Yield losses of 10–40%; severe infestations can defoliate entire plants",
     treatment: ["Apply pyrethroid or carbamate insecticides on foliage", "Use neem extract spray", "Remove heavily infested plant material"],
     prevention: ["Crop rotation", "Use insecticide-treated certified seeds", "Scout fields from crop emergence"] },
-  { name: "grasshopper", color: "#7dbd5f", emoji: "🦗", type: "Pest Infestation",
+  { name: "Grasshopper", color: "#7dbd5f", emoji: "🦗", type: "Pest Infestation",
     description: "Extensive defoliation by chewing of leaf margins and blades. Outbreaks can strip entire fields within days.",
     conditions: "Hot, dry seasons; drought stress; field edges near uncultivated land",
     impact: "Complete crop loss possible during mass outbreak events",
     treatment: ["Apply insecticides in early morning", "Use Metarhizium anisopliae biopesticide", "Bait traps with poisoned bran"],
     prevention: ["Clear bush borders around fields", "Early planting before peak season", "Community-level coordinated spraying"] },
-  { name: "streak virus", color: "#8e44ad", emoji: "🦠", type: "Viral Disease",
+  { name: "Streak Virus", color: "#8e44ad", emoji: "🦠", type: "Viral Disease",
     description: "Maize Streak Virus (MSV) transmitted by leafhopper vectors. Shows narrow broken pale yellow-to-white streaks running parallel to leaf veins.",
     conditions: "High leafhopper populations; warm dry weather (24–32°C); young plants most susceptible",
     impact: "Up to 100% yield loss in susceptible varieties when infection occurs at seedling stage",
