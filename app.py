@@ -93,8 +93,9 @@ def download_model():
         print(f"⬇️  Downloading model from GitHub...")
         urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
         print(f"✅ Downloaded. Extracting...")
+        os.makedirs(MODEL_DIR, exist_ok=True)
         with zipfile.ZipFile(MODEL_PATH, 'r') as z:
-            z.extractall(".")
+            z.extractall(MODEL_DIR)
         os.remove(MODEL_PATH)
         print(f"✅ Model extracted successfully!")
         return True
