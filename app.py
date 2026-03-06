@@ -78,18 +78,31 @@ DISEASE_INFO = {
 # ── Model loading ─────────────────────────────────────────────────────────────
 model = None
 
+# GitHub raw URL for your model
+MODEL_URL = "https://github.com/Sjatoe/maizeguard/raw/main/maize_model_224.keras"
+MODEL_PATH = "maize_model_224.keras"
+
+def download_model():
+    """Download model from GitHub if not already present."""
+    if os.path.exists(MODEL_PATH):
+        print(f"✅ Model already exists at {MODEL_PATH}")
+        return True
+    try:
+        import urllib.request
+        print(f"⬇️  Downloading model from GitHub...")
+        urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+        print(f"✅ Model downloaded successfully!")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to download model: {e}")
+        return False
+
 def load_model():
-    """
-    Load your trained model here.
-    Supports .h5 (Keras), SavedModel folder, or .tflite
-    """
+    """Load the keras model."""
     global model
-    MODEL_PATH = "maize_model_224.keras"   # ← your model file
-
-    if not os.path.exists(MODEL_PATH):
-        print(f"⚠  Model not found at '{MODEL_PATH}'. Running in DEMO mode.")
+    if not download_model():
+        print("⚠  Running in DEMO mode.")
         return
-
     try:
         import tensorflow as tf
         model = tf.keras.models.load_model(MODEL_PATH)
