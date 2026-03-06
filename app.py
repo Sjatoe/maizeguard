@@ -79,34 +79,39 @@ DISEASE_INFO = {
 model = None
 
 # GitHub raw URL for your model
-MODEL_URL = "https://github.com/Sjatoe/maizeguard/raw/main/maize_model_224.keras"
-MODEL_PATH = "maize_model_224.keras"
+MODEL_URL = "https://github.com/Sjatoe/maizeguard/raw/main/maize_model_savedmodel.zip"
+MODEL_PATH = "maize_model_savedmodel.zip"
+MODEL_DIR = "maize_model_savedmodel"
 
 def download_model():
-    """Download model from GitHub if not already present."""
-    if os.path.exists(MODEL_PATH):
-        print(f"✅ Model already exists at {MODEL_PATH}")
+    """Download and extract model from GitHub if not already present."""
+    if os.path.exists(MODEL_DIR):
+        print(f"✅ Model already exists at {MODEL_DIR}")
         return True
     try:
-        import urllib.request
+        import urllib.request, zipfile
         print(f"⬇️  Downloading model from GitHub...")
         urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
-        print(f"✅ Model downloaded successfully!")
+        print(f"✅ Downloaded. Extracting...")
+        with zipfile.ZipFile(MODEL_PATH, 'r') as z:
+            z.extractall(".")
+        os.remove(MODEL_PATH)
+        print(f"✅ Model extracted successfully!")
         return True
     except Exception as e:
         print(f"❌ Failed to download model: {e}")
         return False
 
 def load_model():
-    """Load the keras model."""
+    """Load the SavedModel format model."""
     global model
     if not download_model():
         print("⚠  Running in DEMO mode.")
         return
     try:
         import tensorflow as tf
-        model = tf.keras.models.load_model(MODEL_PATH)
-        print(f"✅ Model loaded from {MODEL_PATH}")
+        model = tf.keras.models.load_model(MODEL_DIR)
+        print(f"✅ Model loaded from {MODEL_DIR}")
     except Exception as e:
         print(f"❌ Failed to load model: {e}")
 
