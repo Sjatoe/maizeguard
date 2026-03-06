@@ -2,7 +2,6 @@ maizeguard-env312/
 maizeguard-env/
 __pycache__/
 *.pyc
-*.keras
 *.h5
 node_modules/
 maizeguard/node_modules/
