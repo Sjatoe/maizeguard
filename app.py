@@ -1,7 +1,7 @@
 """
 MaizeGuard Backend — Flask API
 Run: python app.py
-Requires: pip install flask flask-cors onnxruntime pillow numpy
+Requires: pip install flask flask-cors tensorflow pillow numpy
 """
 
 from flask import Flask, request, jsonify
@@ -21,111 +21,96 @@ scan_history = []
 # These are the exact class names your model was trained on.
 # ⚠ Change this list to match YOUR model's output classes exactly.
 CLASS_NAMES = [
-    "fall armyworm",
+    "fall armyworm", 
     "grasshopper",
-    "healthy",
-    "leaf beetle",
+    "healthy", 
+    "leaf beetle", 
     "leaf blight",
     "leaf spot",
-    "streak virus",
-]
+    "streak virus"
+]   
+
 
 DISEASE_INFO = {
-    "fall armyworm": {
-        "severity": "Critical",
-        "description": "Larvae feed aggressively creating irregular holes and ragged leaf edges with wet sawdust-like frass in the whorl.",
-        "treatment": ["Apply emamectin benzoate or spinetoram into the whorl", "Use Bacillus thuringiensis (Bt) biological control", "Apply neem-based sprays as eco-friendly option"],
-        "prevention": ["Early planting before peak moth migration", "Scout whorls twice weekly", "Use push-pull intercropping strategy"],
-    },
-    "grasshopper": {
-        "severity": "Moderate",
-        "description": "Extensive defoliation by chewing of leaf margins and blades. Outbreaks can strip entire fields within days.",
-        "treatment": ["Apply organophosphate or pyrethroid insecticides in early morning", "Use Metarhizium anisopliae biopesticide", "Bait traps with poisoned bran"],
-        "prevention": ["Clear bush and grass borders around fields", "Early planting before peak season", "Community-level coordinated spraying programs"],
-    },
-    "healthy": {
-        "severity": "None",
-        "description": "No disease detected. The plant appears healthy with no visible symptoms of infection or pest damage.",
-        "treatment": ["No treatment required", "Continue regular field monitoring", "Maintain good agricultural practices"],
-        "prevention": ["Keep up proper watering schedule", "Maintain balanced nutrient management", "Scout regularly for early detection"],
-    },
-    "leaf beetle": {
-        "severity": "Moderate",
-        "description": "Beetles chew long narrow strips between leaf veins, giving leaves a characteristic ladder or window pane appearance.",
-        "treatment": ["Apply pyrethroid or carbamate insecticides on foliage", "Use neem extract spray for organic management", "Remove heavily infested plant material"],
-        "prevention": ["Crop rotation to break beetle life cycle", "Use insecticide-treated certified seeds", "Scout fields from crop emergence"],
-    },
-    "leaf blight": {
+    "Northern Leaf Blight": {
         "severity": "High",
         "description": "Caused by Exserohilum turcicum. Produces long cigar-shaped gray-green lesions that mature to tan with dark borders.",
         "treatment": ["Apply propiconazole or azoxystrobin fungicide", "Crop rotation with non-host crops", "Remove and destroy infected debris"],
         "prevention": ["Plant resistant hybrids", "Scout fields regularly", "Ensure good drainage and air flow"],
     },
-    "leaf spot": {
+    "Fall Armyworm": {
+        "severity": "Critical",
+        "description": "Larvae feed aggressively creating irregular holes and ragged leaf edges with wet sawdust-like frass in the whorl.",
+        "treatment": ["Apply emamectin benzoate or spinetoram into the whorl", "Use Bacillus thuringiensis (Bt) biological control", "Apply neem-based sprays as eco-friendly option"],
+        "prevention": ["Early planting before peak moth migration", "Scout whorls twice weekly", "Use push-pull intercropping strategy"],
+    },
+    "Gray Leaf Spot": {
         "severity": "High",
         "description": "Caused by Cercospora zeae-maydis. Rectangular gray-tan lesions restricted by veins visible on both leaf surfaces.",
         "treatment": ["Apply strobilurin + triazole fungicides", "Improve field drainage", "Reduce canopy density by proper spacing"],
-        "prevention": ["Crop rotation", "Tillage of surface residue", "Plant tolerant varieties"],
+        "prevention": ["Crop rotation", "Tillage of surface residue", "Plant GLS-tolerant varieties"],
     },
-    "streak virus": {
+    "Leaf Beetle": {
+        "severity": "Moderate",
+        "description": "Beetles chew long narrow strips between leaf veins, giving leaves a characteristic ladder or window pane appearance.",
+        "treatment": ["Apply pyrethroid or carbamate insecticides on foliage", "Use neem extract spray for organic management", "Remove heavily infested plant material"],
+        "prevention": ["Crop rotation to break beetle life cycle", "Use insecticide-treated certified seeds", "Scout fields from crop emergence"],
+    },
+    "Grasshopper": {
+        "severity": "Moderate",
+        "description": "Extensive defoliation by chewing of leaf margins and blades. Outbreaks can strip entire fields within days.",
+        "treatment": ["Apply organophosphate or pyrethroid insecticides in early morning", "Use Metarhizium anisopliae biopesticide", "Bait traps with poisoned bran"],
+        "prevention": ["Clear bush and grass borders around fields", "Early planting before peak season", "Community-level coordinated spraying programs"],
+    },
+    "Streak Virus": {
         "severity": "Critical",
         "description": "Transmitted by leafhopper vectors. Shows narrow broken pale yellow-to-white streaks running parallel to leaf veins.",
         "treatment": ["Remove and destroy infected seedlings immediately", "Apply insecticide to control leafhopper vector", "Replant with MSV-resistant hybrid varieties"],
         "prevention": ["Plant MSV-resistant certified varieties", "Use insecticide-treated seeds", "Avoid planting near infected fields"],
+    },
+    "Healthy": {
+        "severity": "None",
+        "description": "No disease detected. The plant appears healthy with no visible symptoms of infection or pest damage.",
+        "treatment": ["No treatment required", "Continue regular field monitoring", "Maintain good agricultural practices"],
+        "prevention": ["Keep up proper watering schedule", "Maintain balanced nutrient management", "Scout regularly for early detection"],
     },
 }
 
 # ── Model loading ─────────────────────────────────────────────────────────────
 model = None
 
-MODEL_URL = "https://raw.githubusercontent.com/Sjatoe/maizeguard/main/maize_model_v2.onnx"
-MODEL_PATH = "maize_model_v2.onnx"
-
-def download_model():
-    """Download ONNX model from GitHub if not already present."""
-    if os.path.exists(MODEL_PATH):
-        print(f"✅ Model already exists at {MODEL_PATH}")
-        return True
-    try:
-        import urllib.request
-        print(f"⬇️  Downloading model from GitHub...")
-        urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
-        print(f"✅ Model downloaded successfully!")
-        return True
-    except Exception as e:
-        print(f"❌ Failed to download model: {e}")
-        return False
-
 def load_model():
-    """Load the ONNX model."""
+    """
+    Load your trained model here.
+    Supports .h5 (Keras), SavedModel folder, or .tflite
+    """
     global model
-    if not download_model():
-        print("⚠  Running in DEMO mode.")
+    MODEL_PATH = "maize_model_v3.onnx"
+    MODEL_URL = "https://raw.githubusercontent.com/Sjatoe/maizeguard/main/maize_model_v3.onnx"
+
+    if not os.path.exists(MODEL_PATH):
+        print(f"⚠  Model not found at '{MODEL_PATH}'. Running in DEMO mode.")
         return
+
     try:
-        import onnxruntime as ort
-        model = ort.InferenceSession(MODEL_PATH, providers=["CPUExecutionProvider"])
-        print(f"✅ ONNX model loaded from {MODEL_PATH}")
+        import tensorflow as tf
+        model = tf.keras.models.load_model(MODEL_PATH)
+        print(f"✅ Model loaded from {MODEL_PATH}")
     except Exception as e:
         print(f"❌ Failed to load model: {e}")
 
 
 def preprocess_image(image_bytes):
     """
-    EfficientNetB0 preprocessing.
-    TF's EfficientNet includes its own normalization internally,
-    so we just resize and pass raw 0-255 pixel values.
+    Resize and normalize a raw image for the model.
+    ⚠ Change IMG_SIZE to match your model's expected input size.
     """
-    IMG_SIZE = (224, 224)
+    IMG_SIZE = (224, 224)   # ← match your model's input shape
 
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    img = img.resize(IMG_SIZE, Image.LANCZOS)
-    arr = np.array(img, dtype=np.float32)
-
-    # EfficientNetB0 in Keras handles normalization internally — pass raw pixels
-    # DO NOT divide by 255
-
-    return np.expand_dims(arr, axis=0)  # shape: (1, 224, 224, 3)
+    img = img.resize(IMG_SIZE)
+    arr = np.array(img, dtype=np.float32) / 255.0   # normalize 0-1
+    return np.expand_dims(arr, axis=0)               # add batch dim → (1,224,224,3)
 
 
 def predict_single(image_bytes):
@@ -140,20 +125,12 @@ def predict_single(image_bytes):
         confidence = round(random.uniform(72, 98), 1)
         return disease, confidence
 
-    # ── REAL INFERENCE (ONNX) ────────────────────────────────────────────────
+    # ── REAL INFERENCE ───────────────────────────────────────────────────────
     tensor = preprocess_image(image_bytes)
-    input_name = model.get_inputs()[0].name
-    predictions = model.run(None, {input_name: tensor})[0][0]  # shape: (num_classes,)
-
-    # Debug: print all class probabilities
-    print("\n🔍 Raw predictions:")
-    for i, (name, prob) in enumerate(zip(CLASS_NAMES, predictions)):
-        print(f"  [{i}] {name}: {prob*100:.2f}%")
-
+    predictions = model.predict(tensor, verbose=0)[0]   # shape: (num_classes,)
     idx = int(np.argmax(predictions))
     confidence = round(float(predictions[idx]) * 100, 1)
     disease = CLASS_NAMES[idx]
-    print(f"✅ Predicted: {disease} ({confidence}%)")
     return disease, confidence
 
 
@@ -186,7 +163,7 @@ def detect():
     for f in files:
         image_bytes = f.read()
         disease, confidence = predict_single(image_bytes)
-        info = DISEASE_INFO.get(disease, DISEASE_INFO["healthy"])
+        info = DISEASE_INFO.get(disease, DISEASE_INFO["Healthy"])
 
         entry = {
             "id": str(uuid.uuid4())[:8],
@@ -210,7 +187,7 @@ def detect():
 def stats():
     """Returns aggregate stats for the Dashboard."""
     total = len(scan_history)
-    diseased = sum(1 for h in scan_history if h["disease"] != "healthy")
+    diseased = sum(1 for h in scan_history if h["disease"] != "Healthy")
     healthy_count = total - diseased
 
     breakdown = {}
