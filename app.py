@@ -78,8 +78,8 @@ DISEASE_INFO = {
 # ── Model loading ─────────────────────────────────────────────────────────────
 model = None
 
-MODEL_URL = "https://github.com/Sjatoe/maizeguard/raw/main/maize_model.onnx"
-MODEL_PATH = "maize_model.onnx"
+MODEL_URL = "https://raw.githubusercontent.com/Sjatoe/maizeguard/main/maize_model_v2.onnx"
+MODEL_PATH = "maize_model_v2.onnx"
 
 def download_model():
     """Download ONNX model from GitHub if not already present."""
