@@ -209,7 +209,6 @@ def clear_history():
     return jsonify({"message": "History cleared"})
 
 
-if __name__ == "__main__":
-    load_model()
-    print("🌽 MaizeGuard API running at http://localhost:8000")
-    app.run(host="0.0.0.0", port=8000, debug=True)
+if __name__ == '__main__':
+    # Hugging Face Spaces uses port 7860 by default
+    app.run(host='0.0.0.0', port=7860)
