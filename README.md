@@ -48,7 +48,7 @@ Image upload → Flask API → Preprocessing → CNN inference → JSON response
 ## Running it locally
 
 ```bash
-git clone https://github.com/your-username/maizeguard.git
+git clone https://github.com/sjatoe/maizeguard.git
 cd maizeguard
 
 python -m venv venv
