@@ -10,16 +10,14 @@ import numpy as np
 from PIL import Image
 import io, uuid, datetime, os
 
-# ── App setup ────────────────────────────────────────────────────────────────
+# App setup
 app = Flask(__name__)
 CORS(app)   # allow React frontend to call this API
 
-# ── In-memory history (replace with a database later) ───────────────────────
+#  In-memory history (replace with a database later)
 scan_history = []
 
-# ── Disease metadata ─────────────────────────────────────────────────────────
-# These are the exact class names your model was trained on.
-# ⚠ Change this list to match YOUR model's output classes exactly.
+
 CLASS_NAMES = [
     "fall armyworm", 
     "grasshopper",
@@ -76,14 +74,12 @@ DISEASE_INFO = {
     },
 }
 
-# ── Model loading ─────────────────────────────────────────────────────────────
+# Model loading
 model = None
 
 def load_model():
-    """
-    Load your trained model here.
-    Supports .h5 (Keras), SavedModel folder, or .tflite
-    """
+   # Load your trained model here.
+   
     global model
     MODEL_PATH = "maize_model_v3.onnx"
     MODEL_URL = "https://raw.githubusercontent.com/Sjatoe/maizeguard/main/maize_model_v3.onnx"
@@ -101,11 +97,8 @@ def load_model():
 
 
 def preprocess_image(image_bytes):
-    """
-    Resize and normalize a raw image for the model.
-    ⚠ Change IMG_SIZE to match your model's expected input size.
-    """
-    IMG_SIZE = (224, 224)   # ← match your model's input shape
+   
+    IMG_SIZE = (224, 224)  
 
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     img = img.resize(IMG_SIZE)
@@ -114,18 +107,18 @@ def preprocess_image(image_bytes):
 
 
 def predict_single(image_bytes):
-    """
-    Run inference on one image. Returns (disease_name, confidence_percent).
-    Falls back to a demo/random result if no model is loaded.
-    """
+   
+  #Run inference on one image. Returns (disease_name, confidence_percent).
+ # Falls back to a demo/random result if no model is loaded.
+   
     if model is None:
-        # ── DEMO MODE (no model loaded) ──────────────────────────────────────
+    
         import random
         disease = random.choice(CLASS_NAMES)
         confidence = round(random.uniform(72, 98), 1)
         return disease, confidence
 
-    # ── REAL INFERENCE ───────────────────────────────────────────────────────
+    # REAL INFERENCE 
     tensor = preprocess_image(image_bytes)
     predictions = model.predict(tensor, verbose=0)[0]   # shape: (num_classes,)
     idx = int(np.argmax(predictions))
@@ -134,7 +127,7 @@ def predict_single(image_bytes):
     return disease, confidence
 
 
-# ── Routes ────────────────────────────────────────────────────────────────────
+# outes
 
 @app.route("/", methods=["GET"])
 def health():
@@ -216,7 +209,6 @@ def clear_history():
     return jsonify({"message": "History cleared"})
 
 
-# ── Start ─────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     load_model()
     print("🌽 MaizeGuard API running at http://localhost:8000")
