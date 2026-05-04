@@ -4,7 +4,7 @@ AI-powered maize disease detection. Upload a photo of a maize leaf, get a diagno
 
 ---
 
-Late or wrong disease diagnosis is one of the leading causes of yield loss in maize farming across sub-Saharan Africa. MaizeGuard is a full-stack web app that uses a trained EfficientNet-B0 modelto classify diseases and pests from leaf images — returning a diagnosis, severity rating, and specific treatment steps without needing an ag ronomist on the ground.
+Late or wrong disease diagnosis is one of the leading causes of yield loss in maize farming across sub-Saharan Africa. MaizeGuard is a full-stack web app that uses a trained EfficientNet-B0 model to classify diseases and pests from leaf images — returning a diagnosis, severity rating, and specific treatment steps without needing an ag ronomist on the ground.
 
 ---
 
@@ -98,16 +98,3 @@ Runs on `http://localhost:8000`. No model file? It drops into demo mode automati
 - Dataset: *1050 images*
 
 ---
-
-## What's next
-
-- Swap the in-memory history for a proper database
-- GPS tagging to map disease outbreaks by region
-- TFLite version for offline mobile use
-- Multilingual support for non-English speaking farming communities
-
----
-
-## License
-
-MIT — use it, build on it.
