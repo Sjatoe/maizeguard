@@ -38,30 +38,10 @@ Image upload → Flask API → Preprocessing → CNN inference → JSON response
 
 | | |
 |---|---|
-| ML | TensorFlow / Keras |
-| Backend | Python, Flask |
+| ML | ONNX,EfficientNet-B0 |
+| Backend | Python, Flask,Docker,CSS3 |
 | Image processing | Pillow, NumPy |
 | Frontend | React |
-
----
-
-## Running it locally
-
-```bash
-git clone https://github.com/sjatoe/maizeguard.git
-cd maizeguard
-
-python -m venv venv
-source venv/bin/activate
-
-pip install flask flask-cors tensorflow pillow numpy
-
-python app.py
-```
-
-Runs on `http://localhost:8000`. No model file? It drops into demo mode automatically — still useful for testing the frontend and API.
-
----
 
 ## API
 
@@ -88,6 +68,7 @@ Runs on `http://localhost:8000`. No model file? It drops into demo mode automati
 **`DELETE /history`** — wipe the slate
 
 ---
+Live app: https://huggingface.co/spaces/Sjatoe/maizeguard-ui
 
 ## Model
 
